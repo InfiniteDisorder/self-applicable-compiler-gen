@@ -1,0 +1,13 @@
+tokens <dot>,<comma>,<I>,<T>,<IS>,<ST>.
+<TD> is <T><I><CI>.
+<CI> is <comma><I><CI>.
+<CI> is .
+<RD> is <I><IS><S>.
+<S> is <I><S>.
+<S> is .
+<P> is <ST><I><dot><P>.
+<P> is <TD><dot><P>.
+<P> is <RD><dot><P>.
+<P> is .
+start <P>.
+

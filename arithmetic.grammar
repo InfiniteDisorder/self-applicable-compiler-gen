@@ -1,0 +1,15 @@
+tokens <plus_sign>, <star>, <n>.
+<E> is  <T> <E1>.
+<E1> is <plus_sign> <T> <E1>.
+<E1> is .
+<T> is <F> <T1>.
+<T1> is <star> <F> <T1>.
+<T1> is .
+<F> is <n>.
+tokens <left_paren>,
+        <right_paren>.
+<F> is <left_paren>  <E>
+        <right_paren>.
+
+start <E>.
+
