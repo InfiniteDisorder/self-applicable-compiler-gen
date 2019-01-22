@@ -1,8 +1,8 @@
-self_table = {'P': {'I': ['RD', 'dot', 'P'], 'ST': ['ST', 'I', 'dot', 'P'], 'T': ['TD', 'dot', 'P'], '$': ['']},
+self_table = {'TD': {'T': ['T', 'I', 'CI']},
+'P': {'ST': ['ST', 'I', 'dot', 'P'], 'T': ['TD', 'dot', 'P'], 'I': ['RD', 'dot', 'P'], '$': ['']},
 'S': {'I': ['I', 'S'], 'dot': ['']},
+'CI': {'comma': ['comma', 'I', 'CI'], 'dot': ['']},
 'RD': {'I': ['I', 'IS', 'S']},
-'CI': {'dot': [''], 'comma': ['comma', 'I', 'CI']},
-'TD': {'T': ['T', 'I', 'CI']},
 }
-self_table_TL = {'comma', 'T', 'I', 'ST', 'dot', 'IS'}
-self_table_NTL = {'P', 'S', 'RD', 'CI', 'TD'}
+self_table_TL = {'T', 'comma', 'dot', 'IS', 'ST', 'I'}
+self_table_NTL = {'TD', 'P', 'S', 'CI', 'RD'}

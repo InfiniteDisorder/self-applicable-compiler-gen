@@ -2,6 +2,7 @@
 
 from self_table import *
 from tree_builder import *
+from LALR import *
 
 
 class ParserGenerator(object):
@@ -11,23 +12,6 @@ class ParserGenerator(object):
         self.T = self_table_TL
         self.NT = self_table_NTL
         self.predict_analysis_table = self_table
-        # self.T = set(['comma', 'dot', 'I', 'T', 'ST', 'IS'])
-        # self.NT = set(['TD', 'CI', 'P', 'S', 'RD'])
-        # self.predict_analysis_table = {'TD':
-        #     {'T': ['T', 'I', 'CI']},
-        #     'CI':
-        #     {'comma': ['comma', 'I', 'CI'],
-        #      'dot': ['']},
-        #     'RD':
-        #     {'I': ['I', 'IS', 'S']},
-        #     'S':
-        #     {'I': ['I', 'S'],
-        #      'dot': ['']},
-        #     'P':
-        #     {'T': ['TD', 'dot', 'P'],
-        #      'ST': ['ST', 'I', 'dot', 'P'],
-        #      'I': ['RD', 'dot', 'P'],
-        #      '$': ['']}}
         self.TL = set()
         self.NTL = set()
         self.rules = []
@@ -38,8 +22,17 @@ class ParserGenerator(object):
         self.tree = build_tree(self.lexer.analyze(), self.T, self.NT, self.predict_analysis_table, 'P')
         self.analyze_inner_tree()
         self.create_first_sets()
-        self.create_follow_sets()
-        self.create_parser_table()
+
+
+        # TODO Make here an LALR(1) Parser
+
+
+        self.lalr_ctx = build_lalr_ctx(self.axiom, self.TL, self.NTL, self.rules, self.first);
+
+
+
+        # self.create_follow_sets()
+        # self.create_parser_table()
         # print(self.first)
         # print(self.follow)
         # for i in self.parser_table:
