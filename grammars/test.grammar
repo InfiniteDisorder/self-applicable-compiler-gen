@@ -1,0 +1,5 @@
+tokens <c>, <d>.
+<S> is <C><C>.
+<C> is <d>.
+<C> is <c><C>.
+start <S>.
