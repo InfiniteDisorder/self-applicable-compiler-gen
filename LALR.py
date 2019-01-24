@@ -28,12 +28,21 @@ def compare(p1, p2):
     return False
 
 
+def compare_kernels(p1, p2):
+    if p1.left == p2.left and \
+        p1.right == p2.right and \
+        p1.pos == p2.pos:
+        return True
+
+    return False
+
 class State:
     def __init__(self, points):
         self.points = points
         self.name = None
         self.kernel = set(points)
         self.goto_dict = {}
+        self.action = {}
 
     def set_name(self, name):
         self.name = name
@@ -117,6 +126,16 @@ def compare_point_sets(set_a, set_b):
         )
     )
 
+def compare_kernel_sets(set_a, set_b):
+    return all(
+        map(lambda y:
+            any(
+                map(lambda x: compare_kernels(x, y), set_a),
+            ),
+            set_b
+        )
+    )
+
 
 def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
     non_terminals.add('~S~')
@@ -129,7 +148,7 @@ def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
 
     states = set()
     states.add(initial_state)
-    initial_state.set_name('0')
+    initial_state.set_name(0)
 
     counter = 1
     flag = True
@@ -141,14 +160,40 @@ def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
                 if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
                     flag = True
                     states.add(f)
-                    f.set_name(str(counter))
+                    f.set_name(counter)
                     counter += 1
                     i.goto_dict[symbol] = f.name
 
     # states with union kernels
+
     lalr_states = set()
     for i in states:
-        pass
+        kernel = set(i.kernel)
+        name = list([i.name])
+        for j in states:
+            if j != i:
+                if compare_kernel_sets(j.kernel, i.kernel):
+                    kernel = kernel.union(j.kernel)
+                    name.append(j.name)
+
+        new_state = State(kernel)
+        if not any(map(lambda x: compare_point_sets(x.points, new_state.points), lalr_states)):
+            lalr_states.add(new_state)
+            new_state.name = '_'.join(map(lambda x: str(x), sorted(name)))
+            new_state.union_of = set(name)
+
+    for i in states:
+        for symbol in non_terminals:
+            if symbol in i.goto_dict:
+                shift = i.goto_dict[symbol]
+                union_state_1 = list(filter(lambda x: i.name in x.union_of, lalr_states))[0]
+                union_state_2 = list(filter(lambda x: shift in x.union_of, lalr_states))[0]
+                union_state_1.goto_dict[symbol] = union_state_2.name
+
+    # for j in lalr_states:
+    #     for p in j.points:
+    #         if len(p.right) == p.pos and p.left != '~S~':
+    #             j.action[p.lookahead] = 'r'
 
 
     pass

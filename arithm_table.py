@@ -1,5 +1,5 @@
-arithmetic = {'S': {},
-'C': {},
+arithmetic = {'C': {},
+'S': {},
 }
-arithmetic_TL = {'c', 'd'}
-arithmetic_NTL = {'S', 'C', '~S~'}
+arithmetic_TL = {'d', 'c'}
+arithmetic_NTL = {'C', 'S', '~S~'}
