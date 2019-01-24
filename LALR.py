@@ -27,13 +27,19 @@ def compare(p1, p2):
 
     return False
 
+
 class State:
     def __init__(self, points):
         self.points = points
+        self.name = None
+        self.kernel = set(points)
+        self.goto_dict = {}
+
+    def set_name(self, name):
+        self.name = name
 
     def already_has_point(self, p):
         return any(map(lambda x: compare(x, p), self.points))
-
 
     def closure(self, nt, t, rules, first):
         flag = True
@@ -41,14 +47,20 @@ class State:
         def find_first(next_token, lookahead):
             if next_token is None:
                 if lookahead == '':
-                    return list('$')
+                    return list(['$'])
                 else:
-                    return list(lookahead)
+                    return list([lookahead])
             if next_token in t:
                 if next_token == '':
                     pass
-                return list(next_token)
+                return list([next_token])
             if next_token in nt:
+                if '' in first[next_token]:
+                    res = set(first[next_token])
+                    res.discard('')
+                    res.add(lookahead)
+                    return list(res)
+
                 return first[next_token]
             raise Exception('No matches found in is_first function')
 
@@ -105,6 +117,7 @@ def compare_point_sets(set_a, set_b):
         )
     )
 
+
 def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
     non_terminals.add('~S~')
     rules['~S~'] = [[axiom]]
@@ -116,7 +129,9 @@ def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
 
     states = set()
     states.add(initial_state)
+    initial_state.set_name('0')
 
+    counter = 1
     flag = True
     while flag:
         flag = False
@@ -126,4 +141,14 @@ def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
                 if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
                     flag = True
                     states.add(f)
+                    f.set_name(str(counter))
+                    counter += 1
+                    i.goto_dict[symbol] = f.name
+
+    # states with union kernels
+    lalr_states = set()
+    for i in states:
+        pass
+
+
     pass
