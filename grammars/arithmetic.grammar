@@ -3,6 +3,7 @@ tokens <lparen>, <rparen>.
 
 <E> is <E><plus><T>.
 <E> is <E><minus><T>.
+<E> is <T>.
 <T> is <T><mul><F>.
 <T> is <T><div><F>.
 <T> is <F>.

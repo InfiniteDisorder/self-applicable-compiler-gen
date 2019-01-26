@@ -47,12 +47,13 @@ def compare_kernels(p1, p2):
 
 
 class State:
-    def __init__(self, points):
+    def __init__(self, points, nt):
         self.points = points
         self.name = None
-        self.kernel = set(points)
+        self.kernel = list(points)
         self.goto_dict = {}
         self.action = {}
+        self.nt = nt
 
     def set_name(self, name):
         self.name = name
@@ -78,7 +79,7 @@ class State:
                     res = set(first[next_token])
                     res.discard('')
                     res.add(lookahead)
-                    return list(res)
+                    return list(sorted(res))
 
                 return first[next_token]
             raise Exception('No matches found in is_first function')
@@ -88,6 +89,8 @@ class State:
             filtered_points = list(filter(lambda x: len(x.right) > x.pos and x.right[x.pos] in nt, self.points))
             if len(filtered_points) == 0:
                 flag = False
+
+            prev_len = len(self.points)
 
             for p in filtered_points:
 
@@ -107,19 +110,19 @@ class State:
                         new_point = Point(production_nt, prod, 0, f)
                         if not self.already_has_point(new_point):
 
-                            self.points.add(new_point)
+                            self.points.append(new_point)
 
-                    if prev_len == len(self.points):
-                        flag = False
+            if prev_len == len(self.points):
+                flag = False
 
     def goto(self, token, nt, t, rules, first):
-        new_points = set()
+        new_points = list()
 
         for i in self.points:
             if len(i.right) > i.pos and i.right[i.pos] == token:
-                new_points.add(Point(i.left, i.right, i.pos + 1, i.lookahead))
+                new_points.append(Point(i.left, i.right, i.pos + 1, i.lookahead))
 
-        new_state = State(new_points)
+        new_state = State(new_points, nt)
         new_state.closure(nt, t, rules, first)
 
         return new_state
@@ -127,7 +130,8 @@ class State:
     def __str__(self):
         action = '\t\t\'ACTION\': {\n' + ',\n'.join(map(lambda k: f'\t\t\t\'{k}\': \'{self.action[k]}\'', self.action)) + \
                  '\n\t\t}'
-        goto = '\t\t\'GOTO\': {\n' + ',\n'.join(map(lambda k: f'\t\t\t\'{k}\': \'{self.action[k]}\'', self.action)) + \
+
+        goto = '\t\t\'GOTO\': {\n' + ',\n'.join(map(lambda k: f'\t\t\t\'{k}\': \'{self.goto_dict[k]}\'', self.goto_dict)) + \
                '\n\t\t}'
         return '{\n' + action + ',\n' + goto + '\n\t}'
 
@@ -147,7 +151,7 @@ def compare_point_sets(set_a, set_b):
     return compare_point_sets_partial(set_a, set_b) and compare_point_sets_partial(set_b, set_a)
 
 
-def compare_kernel_sets(set_a, set_b):
+def compare_kernel_sets_partial(set_a, set_b):
     return all(
         map(lambda y:
             any(
@@ -158,18 +162,22 @@ def compare_kernel_sets(set_a, set_b):
     )
 
 
+def compare_kernel_sets(set_a, set_b):
+    return compare_kernel_sets_partial(set_a, set_b) and compare_kernel_sets_partial(set_b, set_a)
+
+
 class LALRStateMachine:
     def __init__(self, axiom, terminals, non_terminals, rules, first):
         non_terminals.add('~S~')
         rules['~S~'] = [[axiom]]
 
         initial_point = Point('~S~', [axiom], 0, '$'),
-        initial_state = State(set(initial_point))
+        initial_state = State(list(initial_point), non_terminals)
 
         initial_state.closure(non_terminals, terminals, rules, first)
 
-        states = set()
-        states.add(initial_state)
+        states = list()
+        states.append(initial_state)
         initial_state.set_name(0)
 
         counter = 1
@@ -185,7 +193,7 @@ class LALRStateMachine:
                     f = i.goto(symbol, non_terminals, terminals, rules, first)
                     if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
                         flag = True
-                        states.add(f)
+                        states.append(f)
                         f.set_name(counter)
                         counter += 1
                         i.goto_dict[symbol] = f.name
@@ -198,21 +206,26 @@ class LALRStateMachine:
 
         # states with union kernels
 
-        lalr_states = set()
+        lalr_states = list()
         for i in states:
-            kernel = set(i.kernel)
+            kernel = list(i.kernel)
             name = list([i.name])
             for j in states:
                 if j != i:
                     if compare_kernel_sets(j.kernel, i.kernel):
-                        kernel = kernel.union(j.kernel)
+                        kernel = list(set(kernel).union(set(j.kernel)))
                         name.append(j.name)
 
-            new_state = State(kernel)
+            new_state = State(kernel, non_terminals)
             if not any(map(lambda x: compare_point_sets(x.points, new_state.points), lalr_states)):
-                lalr_states.add(new_state)
+                lalr_states.append(new_state)
                 new_state.name = '_'.join(map(lambda x: str(x), sorted(name)))
-                new_state.union_of = set(name)
+                new_state.union_of = list(name)
+
+        a = sum(map(lambda x: len(x.union_of), lalr_states))
+        b = len(states)
+
+        assert a == b
 
         productions = list()
 
@@ -253,6 +266,9 @@ class LALRStateMachine:
 
         self.productions = productions
         self.states = lalr_states
+
+        for i in lalr_states:
+            assert len(i.goto_dict) != 0 or len(i.action) != 0
 
     def __str__(self):
         self.print_states()

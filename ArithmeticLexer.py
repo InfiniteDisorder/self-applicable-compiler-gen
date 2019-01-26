@@ -21,19 +21,27 @@ class ArithmeticLexer(object):
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
             elif self.pos.current_symbol() == '+':
                 self.pos.inc()
-                return Token('plus_sign', '+',
+                return Token('plus', '+',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
             elif self.pos.current_symbol() == '*':
                 self.pos.inc()
-                return Token('star', '*',
+                return Token('minus', '-',
+                             (start.line, start.sym), (self.pos.line, self.pos.sym))
+            elif self.pos.current_symbol() == '-':
+                self.pos.inc()
+                return Token('div', '/',
+                             (start.line, start.sym), (self.pos.line, self.pos.sym))
+            elif self.pos.current_symbol() == '*':
+                self.pos.inc()
+                return Token('mul', '*',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
             elif self.pos.current_symbol() == '(':
                 self.pos.inc()
-                return Token('left_paren', '(',
+                return Token('lparen', '(',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
             elif self.pos.current_symbol() == ')':
                 self.pos.inc()
-                return Token('right_paren', ')',
+                return Token('rparen', ')',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
             else:
                 self.pos.inc()
