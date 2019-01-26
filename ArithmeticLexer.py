@@ -1,4 +1,4 @@
-from tree_builder import *
+from LLTreeBuilder import *
 
 class ArithmeticLexer(object):
     def __init__(self, program):

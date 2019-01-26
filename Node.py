@@ -6,3 +6,4 @@ class Node(object):
 
     def add_child(self, node):
         self.children.append(node)
+

@@ -1,0 +1,11 @@
+tokens <plus>, <minus>, <div>, <mul>, <n>.
+tokens <lparen>, <rparen>.
+
+<E> is <E><plus><T>.
+<E> is <E><minus><T>.
+<T> is <T><mul><F>.
+<T> is <T><div><F>.
+<T> is <F>.
+<F> is <n>.
+<F> is <lparen><E><rparen>.
+start <E>.

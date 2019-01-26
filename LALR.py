@@ -1,5 +1,14 @@
-from node import *
-from lexer import *
+class Production:
+    def __init__(self, left, right):
+        self.left = left
+        self.right = right
+
+    def cmp_point(self, point):
+        return self.left == point.left and self.right == point.right
+
+    def __str__(self):
+        right = ', '.join(map(lambda x: f'\'{x}\'', self.right))
+        return '{' + f'\'left\': \'{self.left}\', \'right\': [{right}]' + '}'
 
 
 class Point:
@@ -35,6 +44,7 @@ def compare_kernels(p1, p2):
         return True
 
     return False
+
 
 class State:
     def __init__(self, points):
@@ -73,9 +83,8 @@ class State:
                 return first[next_token]
             raise Exception('No matches found in is_first function')
 
-
-        while(flag):
-            # Фильтруем, чтобы позиция стояла у нетерминала
+        while flag:
+            # filtering points with following non-terminal
             filtered_points = list(filter(lambda x: len(x.right) > x.pos and x.right[x.pos] in nt, self.points))
             if len(filtered_points) == 0:
                 flag = False
@@ -115,16 +124,28 @@ class State:
 
         return new_state
 
+    def __str__(self):
+        action = '\t\t\'ACTION\': {\n' + ',\n'.join(map(lambda k: f'\t\t\t\'{k}\': \'{self.action[k]}\'', self.action)) + \
+                 '\n\t\t}'
+        goto = '\t\t\'GOTO\': {\n' + ',\n'.join(map(lambda k: f'\t\t\t\'{k}\': \'{self.action[k]}\'', self.action)) + \
+               '\n\t\t}'
+        return '{\n' + action + ',\n' + goto + '\n\t}'
 
-def compare_point_sets(set_a, set_b):
+
+def compare_point_sets_partial(set_a, set_b):
     return all(
         map(lambda y:
             any(
                 map(lambda x: compare(x, y), set_a),
             ),
             set_b
-        )
+            )
     )
+
+
+def compare_point_sets(set_a, set_b):
+    return compare_point_sets_partial(set_a, set_b) and compare_point_sets_partial(set_b, set_a)
+
 
 def compare_kernel_sets(set_a, set_b):
     return all(
@@ -133,67 +154,122 @@ def compare_kernel_sets(set_a, set_b):
                 map(lambda x: compare_kernels(x, y), set_a),
             ),
             set_b
-        )
+            )
     )
 
 
-def build_lalr_ctx(axiom, terminals, non_terminals, rules, first):
-    non_terminals.add('~S~')
-    rules['~S~'] = [[axiom]]
+class LALRStateMachine:
+    def __init__(self, axiom, terminals, non_terminals, rules, first):
+        non_terminals.add('~S~')
+        rules['~S~'] = [[axiom]]
 
-    initial_point = Point('~S~', [axiom], 0, '$'),
-    initial_state = State(set(initial_point))
+        initial_point = Point('~S~', [axiom], 0, '$'),
+        initial_state = State(set(initial_point))
 
-    initial_state.closure(non_terminals, terminals, rules, first)
+        initial_state.closure(non_terminals, terminals, rules, first)
 
-    states = set()
-    states.add(initial_state)
-    initial_state.set_name(0)
+        states = set()
+        states.add(initial_state)
+        initial_state.set_name(0)
 
-    counter = 1
-    flag = True
-    while flag:
-        flag = False
-        for i in set(states):
-            for symbol in non_terminals.union(terminals):
-                f = i.goto(symbol, non_terminals, terminals, rules, first)
-                if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
-                    flag = True
-                    states.add(f)
-                    f.set_name(counter)
-                    counter += 1
-                    i.goto_dict[symbol] = f.name
+        counter = 1
+        flag = True
 
-    # states with union kernels
+        ext_terminals = set(terminals)
+        ext_terminals.add('$')
 
-    lalr_states = set()
-    for i in states:
-        kernel = set(i.kernel)
-        name = list([i.name])
-        for j in states:
-            if j != i:
-                if compare_kernel_sets(j.kernel, i.kernel):
-                    kernel = kernel.union(j.kernel)
-                    name.append(j.name)
+        while flag:
+            flag = False
+            for i in set(states):
+                for symbol in ext_terminals.union(non_terminals):
+                    f = i.goto(symbol, non_terminals, terminals, rules, first)
+                    if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
+                        flag = True
+                        states.add(f)
+                        f.set_name(counter)
+                        counter += 1
+                        i.goto_dict[symbol] = f.name
 
-        new_state = State(kernel)
-        if not any(map(lambda x: compare_point_sets(x.points, new_state.points), lalr_states)):
-            lalr_states.add(new_state)
-            new_state.name = '_'.join(map(lambda x: str(x), sorted(name)))
-            new_state.union_of = set(name)
+                    else:
+                        m = list(filter(lambda x: compare_point_sets(x.points, f.points), states))
+                        assert len(m) <= 1
+                        if len(m) == 1:
+                            i.goto_dict[symbol] = m[0].name
 
-    for i in states:
-        for symbol in non_terminals:
-            if symbol in i.goto_dict:
-                shift = i.goto_dict[symbol]
-                union_state_1 = list(filter(lambda x: i.name in x.union_of, lalr_states))[0]
-                union_state_2 = list(filter(lambda x: shift in x.union_of, lalr_states))[0]
-                union_state_1.goto_dict[symbol] = union_state_2.name
+        # states with union kernels
 
-    # for j in lalr_states:
-    #     for p in j.points:
-    #         if len(p.right) == p.pos and p.left != '~S~':
-    #             j.action[p.lookahead] = 'r'
+        lalr_states = set()
+        for i in states:
+            kernel = set(i.kernel)
+            name = list([i.name])
+            for j in states:
+                if j != i:
+                    if compare_kernel_sets(j.kernel, i.kernel):
+                        kernel = kernel.union(j.kernel)
+                        name.append(j.name)
+
+            new_state = State(kernel)
+            if not any(map(lambda x: compare_point_sets(x.points, new_state.points), lalr_states)):
+                lalr_states.add(new_state)
+                new_state.name = '_'.join(map(lambda x: str(x), sorted(name)))
+                new_state.union_of = set(name)
+
+        productions = list()
+
+        for h in rules:
+            for r in rules[h]:
+                productions.append(Production(h, r))
+
+        for i in states:
+            for symbol in ext_terminals.union(non_terminals):
+                if symbol in i.goto_dict:
+                    shift = i.goto_dict[symbol]
+                    union_state_1 = list(filter(lambda x: i.name in x.union_of, lalr_states))[0]
+                    union_state_2 = list(filter(lambda x: shift in x.union_of, lalr_states))[0]
+                    union_state_1.goto_dict[symbol] = union_state_2.name
+
+        for j in lalr_states:
+            j.closure(non_terminals, terminals, rules, first)
+
+        for j in lalr_states:
+            if j.already_has_point(Point('~S~', [axiom], 1, '$')):
+                j.action['$'] = 'acc'
+                continue
+
+            for p in j.points:
+                if len(p.right) > p.pos:
+                    lookahead = p.right[p.pos]
+                    if lookahead in ext_terminals and lookahead in j.goto_dict:
+                        j.action[lookahead] = 's' + j.goto_dict[lookahead]
+                        continue
+
+                elif len(p.right) == p.pos and p.left != '~S~':
+                    indices = [i for i, el in enumerate(productions) if el.cmp_point(p)]
+                    assert len(indices) == 1
+                    j.action[p.lookahead] = 'r' + str(indices[0])
+
+                else:
+                    raise Exception('Provided grammar is not LALR(1) parseable')
+
+        self.productions = productions
+        self.states = lalr_states
+
+    def __str__(self):
+        self.print_states()
+        return self.print_productions() + '\n\n' + self.print_states() + '\n'
+
+    def print_productions(self):
+        prd = ',\n'.join(map(lambda x: '\t' + str(x), self.productions))
+        return f'productions = [\n{prd}\n]'
+
+    def print_states(self):
+        table = '{\n' + ',\n'.join(map(lambda x: f'\t\'{x.name}\': {str(x)}', self.states)) + '\n}'
+        return f'table = {table}'
+
+    def to_file(self, name):
+        f = open(name, 'w')
+        f.write(str(self))
 
 
-    pass
+
+

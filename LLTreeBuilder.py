@@ -1,5 +1,5 @@
-from node import *
-from lexer import *
+from Node import *
+from GrammarLexer import *
 
 def build_tree(tokens, T, NT, table, axiom):
     tokens.append(Token('$', '', (0, 0), (0, 0)))

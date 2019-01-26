@@ -1,7 +1,5 @@
-# parser_generator.py
-
 from self_table import *
-from tree_builder import *
+from LLTreeBuilder import *
 from LALR import *
 
 
@@ -22,14 +20,7 @@ class ParserGenerator(object):
         self.tree = build_tree(self.lexer.analyze(), self.T, self.NT, self.predict_analysis_table, 'P')
         self.analyze_inner_tree()
         self.create_first_sets()
-
-
-        # TODO Make here an LALR(1) Parser
-
-
-        self.lalr_ctx = build_lalr_ctx(self.axiom, self.TL, self.NTL, self.rules, self.first);
-
-
+        self.state_machine = LALRStateMachine(self.axiom, self.TL, self.NTL, self.rules, self.first)
 
         # self.create_follow_sets()
         # self.create_parser_table()

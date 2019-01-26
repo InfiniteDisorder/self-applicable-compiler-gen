@@ -1,6 +1,6 @@
 from arithm_table import *
-from arithmetic_lexer import *
-from tree_builder import *
+from ArithmeticLexer import *
+from LLTreeBuilder import *
 
 while True:
     expression = input('Enter arithmetic expression:\n')
