@@ -22,13 +22,6 @@ class LLParserGenerator(object):
         self.create_first_sets()
         self.state_machine = LALRStateMachine(self.axiom, self.TL, self.NTL, self.rules, self.first)
 
-        # self.create_follow_sets()
-        # self.create_parser_table()
-        # print(self.first)
-        # print(self.follow)
-        # for i in self.parser_table:
-        #     print(i, self.parser_table[i])
-
     def first_walk(self, node):
         if node.marker == 'P':
             for c in node.children:
@@ -39,7 +32,6 @@ class LLParserGenerator(object):
                 print('ERROR: duplicate token declaration.')
             else:
                 pass
-                #print(ident.marker.image[1:-1])
             self.TL.add(ident.marker.image[1:-1])
             self.first_walk(node.children[2])
         elif node.marker == 'CI' and node.children:
@@ -48,7 +40,6 @@ class LLParserGenerator(object):
                 print('ERROR: duplicate token declaration.')
             else:
                 pass
-                #print(ident.marker.image[1:-1])
             self.TL.add(ident.marker.image[1:-1])
             self.first_walk(node.children[2])
         elif node.marker == 'RD':

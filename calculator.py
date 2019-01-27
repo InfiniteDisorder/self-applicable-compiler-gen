@@ -1,5 +1,5 @@
-from arithm_table import table as t
-from arithm_table import productions as p
+from arithmetic_table import table as t
+from arithmetic_table import productions as p
 
 from LALRTreeBuilder import *
 from ArithmeticLexer import ArithmeticLexer as Lexer
