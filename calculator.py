@@ -1,13 +1,19 @@
-from arithm_table import *
-from ArithmeticLexer import *
-from LLTreeBuilder import *
+from arithm_table import table as t
+from arithm_table import productions as p
+
+from LALRTreeBuilder import *
+from ArithmeticLexer import ArithmeticLexer as Lexer
+from ArithmeticTreeTraverse import traverse
+
+build = LALRTreeBuilder(t, p).builder()
+tree = build(Lexer('1 + 2 * 3 * (3 * 3 - 2 * (9 - 0)) ').analyze())
 
 while True:
     expression = input('Enter arithmetic expression:\n')
     if expression:
-        tokens = ArithmeticLexer(expression).analyze()
-        tree = build_tree(tokens, arithmetic_TL, arithmetic_NTL, arithmetic, 'E')
-        print(process_arithmetic_tree(tree))
+        build = LALRTreeBuilder(t, p).builder()
+        tree = build(Lexer(expression).analyze())
+        print(traverse(tree))
     else:
         break
 

@@ -23,11 +23,11 @@ class ArithmeticLexer(object):
                 self.pos.inc()
                 return Token('plus', '+',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
-            elif self.pos.current_symbol() == '*':
+            elif self.pos.current_symbol() == '-':
                 self.pos.inc()
                 return Token('minus', '-',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
-            elif self.pos.current_symbol() == '-':
+            elif self.pos.current_symbol() == '/':
                 self.pos.inc()
                 return Token('div', '/',
                              (start.line, start.sym), (self.pos.line, self.pos.sym))
