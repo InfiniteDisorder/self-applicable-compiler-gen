@@ -3,7 +3,7 @@ from LLTreeBuilder import *
 from LALR import *
 
 
-class ParserGenerator(object):
+class LLParserGenerator(object):
     def __init__(self, program):
         self.lexer = Lexer(program)
         self.tree = []

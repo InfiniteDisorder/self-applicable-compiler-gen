@@ -1,0 +1,13 @@
+tokens <dot>,<comma>,<I>,<T>,<IS>,<ST>.
+
+<P> is <F>.
+<P> is <F><P>.
+<F> is <ST><I><dot>.
+<F> is <T><CI><dot>.
+<F> is <I><IS><S><dot>.
+<S> is .
+<S> is <I><S>.
+<CI> is <I>.
+<CI> is <CI><comma><I>.
+
+start <P>.

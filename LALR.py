@@ -276,7 +276,7 @@ class LALRStateMachine:
         #     print(i.goto_dict)
         #     for j in i.kernel:
         #         print(j.left, '->', j.right, ':', j.pos, ',', j.lookahead)
-        #
+
         # for i in lalr_states:
         #     print(i.name)
         #     print(i.goto_dict)
