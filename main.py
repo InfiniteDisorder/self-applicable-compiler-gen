@@ -15,9 +15,9 @@ from LALRTreeBuilder import *
 from ArithmeticLexer import ArithmeticLexer as Lexer
 
 build = LALRTreeBuilder(t, p).builder()
-tree = build(Lexer('1 + 2 * 3').analyze())
+tree = build(Lexer('1 + 2 * 3 * (3 * 3 - 2 * (9 - 0)) ').analyze())
 
-
+pass
 #.print_table_to_file(open(sys.argv[2], 'w'), 'arithmetic')
 
 # f = ParserGenerator(open(sys.argv[3]).read())

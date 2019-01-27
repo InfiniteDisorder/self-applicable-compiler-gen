@@ -54,6 +54,7 @@ class State:
         self.goto_dict = {}
         self.action = {}
         self.nt = nt
+        self.closured = False
 
     def set_name(self, name):
         self.name = name
@@ -104,8 +105,6 @@ class State:
 
                     firsts = find_first(next_token, p.lookahead)
 
-                    prev_len = len(self.points)
-
                     for f in firsts:
                         new_point = Point(production_nt, prod, 0, f)
                         if not self.already_has_point(new_point):
@@ -115,10 +114,15 @@ class State:
             if prev_len == len(self.points):
                 flag = False
 
+        self.closured = True
+
     def goto(self, token, nt, t, rules, first):
         new_points = list()
 
         for i in self.points:
+            if token == 'n' and i.left == 'F':
+                token = token
+
             if len(i.right) > i.pos and i.right[i.pos] == token:
                 new_points.append(Point(i.left, i.right, i.pos + 1, i.lookahead))
 
@@ -191,6 +195,8 @@ class LALRStateMachine:
             for i in set(states):
                 for symbol in ext_terminals.union(non_terminals):
                     f = i.goto(symbol, non_terminals, terminals, rules, first)
+                    if symbol == 'n':
+                        symbol = symbol
                     if len(f.points) != 0 and not any(map(lambda x: compare_point_sets(x.points, f.points), states)):
                         flag = True
                         states.append(f)
@@ -245,21 +251,19 @@ class LALRStateMachine:
             j.closure(non_terminals, terminals, rules, first)
 
         for j in lalr_states:
-            if j.already_has_point(Point('~S~', [axiom], 1, '$')):
-                j.action['$'] = 'acc'
-                continue
-
             for p in j.points:
                 if len(p.right) > p.pos:
                     lookahead = p.right[p.pos]
                     if lookahead in ext_terminals and lookahead in j.goto_dict:
                         j.action[lookahead] = 's' + j.goto_dict[lookahead]
-                        continue
 
                 elif len(p.right) == p.pos and p.left != '~S~':
                     indices = [i for i, el in enumerate(productions) if el.cmp_point(p)]
                     assert len(indices) == 1
                     j.action[p.lookahead] = 'r' + str(indices[0])
+
+                elif compare(Point('~S~', [axiom], 1, '$'), p):
+                    j.action['$'] = 'acc'
 
                 else:
                     raise Exception('Provided grammar is not LALR(1) parseable')
@@ -267,8 +271,24 @@ class LALRStateMachine:
         self.productions = productions
         self.states = lalr_states
 
+        # for i in states:
+        #     print(i.name)
+        #     print(i.goto_dict)
+        #     for j in i.kernel:
+        #         print(j.left, '->', j.right, ':', j.pos, ',', j.lookahead)
+        #
+        # for i in lalr_states:
+        #     print(i.name)
+        #     print(i.goto_dict)
+        #     for j in i.points:
+        #         print(j.left, '->', j.right, ':', j.pos, ',', j.lookahead)
+
         for i in lalr_states:
             assert len(i.goto_dict) != 0 or len(i.action) != 0
+            assert len(i.action) != 0
+            for k in i.goto_dict:
+                if k in ext_terminals:
+                    assert k in i.action
 
     def __str__(self):
         self.print_states()
